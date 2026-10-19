@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: flowsync_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: flowsync_user
+      POSTGRES_PASSWORD: flowsync_pass
+      POSTGRES_DB: flowsync_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowsync_user -d flowsync_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
