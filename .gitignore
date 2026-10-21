@@ -1,6 +1,18 @@
-node_modules/
-dist/
 .env
 .env.local
 *.log
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.pytest_cache/
+
+# IDEs
+.idea/
+.vscode/
+*.swp

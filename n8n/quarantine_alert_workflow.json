@@ -1,0 +1,115 @@
+{
+  "name": "FlowSync - Quarantine Anomaly Alert & Resolution",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "1",
+      "name": "Schedule Trigger (Every 5m)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/v1/quarantine?resolved=false",
+        "options": {}
+      },
+      "id": "2",
+      "name": "Fetch Unresolved Quarantine Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "3",
+      "name": "Has Corrupted Payloads?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#comex-alerts",
+          "mode": "name"
+        },
+        "text": "=:warning: *FlowSync Alert - Contrato Comex Quebrado!*\n*Parceiro:* {{ $json.provider }}\n*Motivo:* {{ $json.rejection_reason }}\n*Erros Zod/Pydantic:* `{{ JSON.stringify($json.validation_errors) }}`\n*Ação Requerida:* Notificar equipe do armador para ajuste de manifesto.",
+        "otherOptions": {}
+      },
+      "id": "4",
+      "name": "Notify Slack / Operations",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [880, 240]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (Every 5m)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Unresolved Quarantine Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Unresolved Quarantine Events": {
+      "main": [
+        [
+          {
+            "node": "Has Corrupted Payloads?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Corrupted Payloads?": {
+      "main": [
+        [
+          {
+            "node": "Notify Slack / Operations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}
